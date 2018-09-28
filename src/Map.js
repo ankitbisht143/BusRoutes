@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {View,Dimensions,StyleSheet,Image,TouchableOpacity} from 'react-native';
+import {View,Dimensions,StyleSheet,Image,TouchableOpacity,Text} from 'react-native';
 import MapView from 'react-native-maps';
 import Polyline from '@mapbox/polyline';
 import Spinner from 'react-native-loading-spinner-overlay';
@@ -28,7 +28,8 @@ export default class Map extends Component{
       },
       markers:[],
       polygonPaths:[],
-      loading:true
+      loading:true,
+      totalDistance:''
     }
   }
 
@@ -78,7 +79,6 @@ export default class Map extends Component{
   }
 
   async findAllRoutes(destlocation) {
-    console.log(`https://maps.googleapis.com/maps/api/directions/json?origin=${this.state.region.latitude},${this.state.region.longitude}&destination=${destlocation.lat},${destlocation.lng}&alternatives=true`);
         try {
             this.setState({loading:true})
             let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${this.state.region.latitude},${this.state.region.longitude}&destination=${destlocation.lat},${destlocation.lng}&alternatives=true`)
@@ -95,10 +95,10 @@ export default class Map extends Component{
                 })
                 pathArr.push(coords)
             }
-
               this.setState({
                 polygonPaths:pathArr,
-                loading:false
+                loading:false,
+                totalDistance:respJson.routes[0].legs[0].distance.text,
               })
 
         } catch(error) {
@@ -112,9 +112,9 @@ export default class Map extends Component{
     return(
       <View>
         <Spinner visible={this.state.loading} textStyle={{color: '#FFF',marginTop:-60}} />
-          <MapView style={styles.map} region={this.state.region} showsUserLocation loadingEnabled showsMyLocationButton={true}>
+          <MapView followsUserLocation={true} style={styles.map} region={this.state.region} showsUserLocation loadingEnabled showsMyLocationButton={true}>
             {this.state.markers.map(marker => (
-              <MapView.Marker onCalloutPress={() => this.findAllRoutes(marker.geometry.location)} coordinate={{latitude:marker.geometry.location.lat,longitude:marker.geometry.location.lng}} title={marker.name}>
+              <MapView.Marker onCalloutPress={() => this.findAllRoutes(marker.geometry.location)} coordinate={{latitude:marker.geometry.location.lat,longitude:marker.geometry.location.lng}} title={marker.name} description={marker.vicinity}>
                 <Image source={require('./assets/marker.png')} style={styles.marker}/>
               </MapView.Marker>
             ))}
